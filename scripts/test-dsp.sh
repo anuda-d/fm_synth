@@ -46,8 +46,8 @@ HELP
 done
 
 mkdir -p "$output_dir"
-"$compiler" "${compile_flags[@]}" -isysroot "$sdk_path" -I "$repo_dir/Sources/CDSP/include" \
-    "$repo_dir/Tests/DSPTests.cpp" "$repo_dir/Sources/CDSP/FMSynth.cpp" \
+"$compiler" "${compile_flags[@]}" -isysroot "$sdk_path" -I "$repo_dir/src/CDSP/include" \
+    "$repo_dir/Tests/DSPTests.cpp" "$repo_dir/src/CDSP/FMSynth.cpp" \
     -o "$output_dir/$binary_name"
 if ((${#test_args[@]})); then
     "$output_dir/$binary_name" "${test_args[@]}"

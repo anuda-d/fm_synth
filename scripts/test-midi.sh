@@ -10,11 +10,11 @@ synth_swift="${MIDI_SWIFTC:-$DEVELOPER_DIR/usr/bin/swiftc}"
 
 mkdir -p "$synth_output"
 "$synth_cxx" -std=c++17 -O2 -mmacosx-version-min=14.0 -isysroot "$synth_sdk" \
-    -I "$synth_root/Sources/CDSP/include" -c "$synth_root/Sources/CDSP/FMSynth.cpp" \
+    -I "$synth_root/src/CDSP/include" -c "$synth_root/src/CDSP/FMSynth.cpp" \
     -o "$synth_output/FMSynth.o"
 "$synth_swift" -parse-as-library -O -sdk "$synth_sdk" \
     -target "$(uname -m)-apple-macosx14.0" -module-cache-path "$synth_root/build/ModuleCache" \
-    -I "$synth_root/Sources/CDSP/include" "$synth_root/Sources/AmberFM/AudioController.swift" \
+    -I "$synth_root/src/CDSP/include" "$synth_root/src/AmberFM/AudioController.swift" \
     "$synth_root/scripts/midi-probe.swift" "$synth_output/FMSynth.o" -lc++ \
     -o "$synth_output/midi-probe"
 

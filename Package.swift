@@ -6,8 +6,8 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [.executable(name: "AmberFM", targets: ["AmberFM"])],
     targets: [
-        .target(name: "CDSP", publicHeadersPath: "include", cxxSettings: [.unsafeFlags(["-O3"])]),
-        .executableTarget(name: "AmberFM", dependencies: ["CDSP"],
+        .target(name: "CDSP", path: "src/CDSP", publicHeadersPath: "include", cxxSettings: [.unsafeFlags(["-O3"])]),
+        .executableTarget(name: "AmberFM", dependencies: ["CDSP"], path: "src/AmberFM",
                           linkerSettings: [.linkedFramework("SwiftUI"), .linkedFramework("AppKit"),
                                            .linkedFramework("AVFoundation"), .linkedFramework("CoreMIDI")])
     ],
