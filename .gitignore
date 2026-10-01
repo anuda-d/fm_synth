@@ -1,0 +1,7 @@
+.build/
+build/
+.DS_Store
+*.xcuserstate
+.unlazy/
+.unlazy-hook-state.json
+.claude/settings.local.json

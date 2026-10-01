@@ -1,0 +1,4 @@
+module CDSP {
+    header "FMSynth.h"
+    export *
+}
