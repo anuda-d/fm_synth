@@ -7,8 +7,8 @@ enum SelfTest {
         func check(_ condition: @autoclosure () -> Bool, _ message: String) {
             if !condition() { failures.append(message); print("FAIL: \(message)") }
         }
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("amber-model-test-\(UUID().uuidString)", isDirectory: true)
-        let suite = "AmberFM.SelfTest.\(UUID().uuidString)"
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("fm-synth-model-test-\(UUID().uuidString)", isDirectory: true)
+        let suite = "FMSynth.SelfTest.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suite) else { print("FAIL: isolated defaults unavailable"); return false }
         defer { defaults.removePersistentDomain(forName: suite); try? FileManager.default.removeItem(at: directory) }
         check(Parameter.allCases.count == Int(FM_PARAMETER_COUNT.rawValue), "Swift/C parameter count matches")
@@ -83,7 +83,7 @@ enum SelfTest {
             recovered.persist()
         } catch { failures.append("Recovery test: \(error)") }
         check(AudioController.parserSelfTest(), "MIDI packet parser edge cases")
-        if failures.isEmpty { print("AMBER_MODEL_TESTS_PASS: persistence, preferences, validation, and MIDI parsing"); return true }
+        if failures.isEmpty { print("FM_SYNTH_MODEL_TESTS_PASS: persistence, preferences, validation, and MIDI parsing"); return true }
         print("\(failures.count) model test failures")
         return false
     }

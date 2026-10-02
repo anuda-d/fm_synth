@@ -2,20 +2,23 @@ import SwiftUI
 import AppKit
 
 @main
-enum AmberMain {
+enum FMSynthMain {
     @MainActor static func main() {
         if CommandLine.arguments.contains("--self-test") {
             exit(SelfTest.run() ? 0 : 1)
         }
-        AmberApplication.main()
+        if CommandLine.arguments.contains("--hint-self-test") {
+            exit(HintPresenter.selfTest() ? 0 : 1)
+        }
+        FMSynthApplication.main()
     }
 }
 
-struct AmberApplication: App {
-    @NSApplicationDelegateAdaptor(AmberAppDelegate.self) private var appDelegate
+struct FMSynthApplication: App {
+    @NSApplicationDelegateAdaptor(FMSynthAppDelegate.self) private var appDelegate
     @StateObject private var model = SynthModel()
     var body: some Scene {
-        Window("Amber FM", id: "instrument") {
+        Window("FM Synth", id: "instrument") {
             ContentView()
                 .environmentObject(model)
                 .onAppear {
@@ -45,7 +48,7 @@ struct AmberApplication: App {
 }
 
 @MainActor
-final class AmberAppDelegate: NSObject, NSApplicationDelegate {
+final class FMSynthAppDelegate: NSObject, NSApplicationDelegate {
     var model: SynthModel?
     var keyboard: ComputerKeyboard?
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -63,7 +66,7 @@ final class AmberAppDelegate: NSObject, NSApplicationDelegate {
         guard let window = NSApp.windows.first, !window.styleMask.contains(.fullScreen) else { return }
         let oldFrame = window.frame
         let limit = window.screen?.visibleFrame.height ?? 1200
-        let height = min(limit, max(window.minSize.height, oldFrame.height + (shown ? 112 : -112)))
+        let height = min(limit, max(window.minSize.height, oldFrame.height + (shown ? 140 : -140)))
         window.setFrame(NSRect(x: oldFrame.minX, y: oldFrame.maxY - height, width: oldFrame.width, height: height), display: true, animate: true)
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }

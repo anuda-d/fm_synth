@@ -10,7 +10,7 @@ private struct ProbeFailure: Error, CustomStringConvertible {
 
 @MainActor
 private final class VirtualKeyboard {
-    let name = "Amber FM Integration Probe"
+    let name = "FM Synth Integration Probe"
     private var client: MIDIClientRef = 0
     private var source: MIDIEndpointRef = 0
 

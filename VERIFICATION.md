@@ -1,7 +1,7 @@
-# Amber FM verification
+# FM Synth verification
 
 Verified on the development Mac on October 1, 2026.
-The release app is `build/AmberFM.app`.
+The release app is `build/FM Synth.app`.
 
 ## Results
 
@@ -11,6 +11,23 @@ The release app is `build/AmberFM.app`.
 - Real CoreMIDI injection into AVAudioEngine passed with 44.1 kHz output and observed 128-frame callbacks.
 - Native interface checks covered playing and releasing notes, exact parameter entry, saving and renaming, cold-start restoration, hints, and keyboard visibility.
 - Independent source reviews and UndefinedBehaviorSanitizer passed.
+
+## Interface revision
+
+The FM Synth rename preserves the existing bundle identifier, preference domain, and preset storage location.
+The release build completes without compiler warnings and passes bundle validation and signature verification.
+The bundled `--self-test` passes preset persistence, preferences, validation, and MIDI parsing checks.
+The bundled `--hint-self-test` passes native dwell timing, redraw persistence, click release, cancellation, placement, and passive-input checks.
+The user confirmed that a real mouse hover shows an explanation and keeps it visible in the rebuilt app.
+The original macOS `.help` failure mechanism was not conclusively isolated; the replacement uses explicit AppKit tracking and presentation.
+
+Native interface checks verified the fullscreen keyboard fills the spare height, the compact window fits without scrolling, and keyboard hiding and showing resize the window.
+All visible keys show note names and octaves, with smaller boxed typing shortcuts.
+The displayed range follows octave changes so every typing shortcut remains visible.
+The library search matched the bass category, the My Sounds filter retained Warm Tines, and loading a search result restored typing controls.
+Audio starts successfully at 44.1 kHz with 128-frame buffers.
+Independent source review found no new audio-thread work or polling introduced by the hint system.
+The DSP implementation is unchanged by this interface revision; the benchmark below belongs to the original engine verification.
 
 ## Final processing benchmark
 

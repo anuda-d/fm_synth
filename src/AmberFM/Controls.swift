@@ -21,8 +21,9 @@ extension Color {
 }
 
 extension View {
-    @ViewBuilder func hint(_ text: String, enabled: Bool) -> some View {
-        if enabled { self.help(text) } else { self }
+    func hint(_ text: String, enabled: Bool) -> some View {
+        self.background(HintRegion(text: text, enabled: enabled))
+            .accessibilityHint(enabled ? text : "")
     }
     func etchedPanel() -> some View {
         self.padding(16)

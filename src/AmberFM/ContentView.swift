@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var presetSheet: PresetAction?
     @State private var presetName = ""
     @State private var confirmDelete = false
+    @State private var libraryShown = false
 
     enum PresetAction: String, Identifiable { case save, rename; var id: String { rawValue } }
 
@@ -15,17 +16,21 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 header
                 Rectangle().fill(Palette.line).frame(height: 1)
-                ScrollView(.vertical) {
-                    VStack(spacing: 12) {
-                        presetBar
-                        HStack(alignment: .top, spacing: 14) {
-                            OperatorPanel(modulator: false).frame(maxWidth: .infinity)
-                            OperatorPanel(modulator: true).frame(maxWidth: .infinity)
-                            OutputPanel(audio: model.audio).frame(width: 270)
-                        }
-                        effectsRack
-                        if model.showKeyboard { InstrumentKeyboard(audio: model.audio) }
-                    }.padding(18)
+                GeometryReader { viewport in
+                    ScrollView(.vertical) {
+                        InstrumentLayout(availableHeight: viewport.size.height - 16) {
+                            VStack(spacing: 12) {
+                                presetBar
+                                HStack(alignment: .top, spacing: 14) {
+                                    OperatorPanel(modulator: false).frame(maxWidth: .infinity)
+                                    OperatorPanel(modulator: true).frame(maxWidth: .infinity)
+                                    OutputPanel(audio: model.audio).frame(width: 270)
+                                }
+                                effectsRack
+                            }
+                            if model.showKeyboard { InstrumentKeyboard(audio: model.audio) }
+                        }.padding(.horizontal, 18).padding(.vertical, 8)
+                    }
                 }
                 footer
             }.background(Palette.cream)
@@ -43,7 +48,7 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) { model.deletePreset() }
         } message: { Text("“\(model.patch.name)” will be removed from your saved sounds.") }
-        .alert("Amber FM", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {
+        .alert("FM Synth", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {
             Button("OK") { model.errorMessage = nil }
         } message: { Text(model.errorMessage ?? "") }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.willResignActiveNotification)) { _ in model.releaseLocalNotes() }
@@ -52,15 +57,11 @@ struct ContentView: View {
     private var header: some View {
         HStack(spacing: 18) {
             Screw()
-            HStack(alignment: .firstTextBaseline, spacing: 9) {
-                Text("amber").font(.system(size: 35, weight: .medium, design: .serif)).tracking(-1.5)
-                Text("FM").font(.system(size: 12, weight: .bold, design: .monospaced)).tracking(3).foregroundStyle(Palette.orange)
-            }
+            Text("FM Synth").font(.system(size: 32, weight: .medium, design: .serif)).tracking(-1)
             Rectangle().fill(Palette.line).frame(width: 1, height: 28).padding(.horizontal, 4)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("TWO OPERATOR SYNTHESIZER").font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.5)
-                Text("A little modulation. A world of sound.").font(.system(size: 11)).foregroundStyle(Palette.secondary)
-            }
+            Text("TWO OPERATOR SYNTHESIZER")
+                .font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1.5)
+                .foregroundStyle(Palette.secondary)
             Spacer()
             Toggle(isOn: $model.showHints) { Text("Hints").font(.system(size: 11)) }
                 .toggleStyle(.switch).controlSize(.mini).fixedSize()
@@ -73,42 +74,45 @@ struct ContentView: View {
 
     private var presetBar: some View {
         HStack(spacing: 10) {
-            Text("SOUND LIBRARY").font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1)
-                .foregroundStyle(Palette.secondary).frame(width: 112, alignment: .leading)
-            Button { model.adjacentPreset(-1) } label: { Image(systemName: "chevron.left") }
-                .buttonStyle(InstrumentButtonStyle()).accessibilityLabel("Previous preset")
-            Menu {
-                Section("Factory sounds") {
-                    ForEach(Patch.factory) { patch in
-                        Button { model.select(patch) } label: {
-                            if patch.id == model.selectedID { Label(patch.name, systemImage: "checkmark") }
-                            else { Text(patch.name) }
-                        }
-                    }
-                }
-                if !model.userPatches.isEmpty {
-                    Section("Your sounds") {
-                        ForEach(model.userPatches) { patch in
-                            Button { model.select(patch) } label: {
-                                if patch.id == model.selectedID { Label(patch.name, systemImage: "checkmark") }
-                                else { Text(patch.name) }
+            Button { libraryShown.toggle() } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "square.grid.2x2").font(.system(size: 13))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("SOUND LIBRARY").font(.system(size: 8, weight: .semibold, design: .monospaced)).tracking(1)
+                            .foregroundStyle(Palette.secondary)
+                        HStack(spacing: 7) {
+                            Text(model.patch.name).font(.system(size: 17, weight: .medium, design: .serif)).lineLimit(1)
+                            if model.dirty {
+                                Circle().fill(Palette.orange).frame(width: 5, height: 5).accessibilityLabel("Edited")
                             }
                         }
                     }
+                    Spacer(minLength: 16)
+                    Text(model.patch.category).font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Palette.secondary).lineLimit(1)
+                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                 }
-            } label: {
-                HStack {
-                    Circle().fill(Palette.orange).frame(width: 5, height: 5)
-                    Text(model.patch.name).font(.system(size: 16, weight: .medium, design: .serif))
-                    if model.dirty { Text("•").foregroundStyle(Palette.orange).accessibilityLabel("Edited") }
-                    Spacer()
-                    Text(model.patch.category).font(.system(size: 9, weight: .medium, design: .monospaced)).tracking(0.5).foregroundStyle(Palette.secondary)
-                }.padding(.horizontal, 14).frame(height: 37)
-                    .background(Palette.panel, in: RoundedRectangle(cornerRadius: 4))
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.line, lineWidth: 1))
-            }.menuStyle(.borderlessButton).frame(maxWidth: .infinity).accessibilityLabel("Choose preset")
-            Button { model.adjacentPreset(1) } label: { Image(systemName: "chevron.right") }
-                .buttonStyle(InstrumentButtonStyle()).accessibilityLabel("Next preset")
+                .padding(.horizontal, 13).frame(height: 48)
+                .background(Palette.panel, in: RoundedRectangle(cornerRadius: 5))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(libraryShown ? Palette.orange : Palette.line, lineWidth: 1))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).accessibilityLabel("Browse sounds: \(model.patch.name)")
+            .accessibilityIdentifier("soundLibraryButton")
+            .popover(isPresented: $libraryShown, arrowEdge: .bottom) {
+                SoundLibraryBrowser().environmentObject(model)
+            }
+            HStack(spacing: 3) {
+                Button { model.adjacentPreset(-1) } label: { Image(systemName: "chevron.left") }
+                    .accessibilityLabel("Previous sound")
+                Button { model.adjacentPreset(1) } label: { Image(systemName: "chevron.right") }
+                    .accessibilityLabel("Next sound")
+            }.buttonStyle(InstrumentButtonStyle())
+            if !model.patch.isFactory {
+                Button("SAVE") { model.updatePreset() }
+                    .buttonStyle(InstrumentButtonStyle(accent: model.dirty)).disabled(!model.dirty)
+                    .accessibilityLabel("Save changes to current sound")
+            }
             Button("SAVE AS…") { presetName = model.patch.name + (model.patch.isFactory ? " edit" : " copy"); presetSheet = .save }
                 .buttonStyle(InstrumentButtonStyle()).accessibilityIdentifier("savePresetButton")
             Menu {
@@ -117,12 +121,11 @@ struct ContentView: View {
                 }.disabled(!model.dirty)
                 if !model.patch.isFactory {
                     Divider()
-                    Button("Update saved sound") { model.updatePreset() }.disabled(!model.dirty)
                     Button("Rename…") { presetName = model.patch.name; presetSheet = .rename }
                     Button("Delete…", role: .destructive) { confirmDelete = true }
                 }
             } label: { Image(systemName: "ellipsis").frame(width: 25) }
-                .menuStyle(.borderlessButton).fixedSize().accessibilityLabel("Preset actions")
+                .menuStyle(.borderlessButton).fixedSize().accessibilityLabel("Sound actions")
         }
     }
 
@@ -163,6 +166,32 @@ struct ContentView: View {
         if action == .save { model.savePreset(name: presetName) }
         else { model.renamePreset(name: presetName) }
         presetSheet = nil
+    }
+}
+
+/// Measure the controls once per layout pass, then give the keyboard all
+/// remaining height. No state feedback loop or fixed screen-size assumptions.
+private struct InstrumentLayout: Layout {
+    var availableHeight: CGFloat
+    private let spacing: CGFloat = 12
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 1100
+        let controls = subviews[0].sizeThatFits(ProposedViewSize(width: width, height: nil))
+        let minimum = controls.height + (subviews.count > 1 ? spacing + 128 : 0)
+        return CGSize(width: width, height: subviews.count > 1 ? max(minimum, availableHeight) : minimum)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let controls = subviews[0].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+        subviews[0].place(at: bounds.origin, anchor: .topLeading,
+                          proposal: ProposedViewSize(width: bounds.width, height: controls.height))
+        if subviews.count > 1 {
+            subviews[1].place(at: CGPoint(x: bounds.minX, y: bounds.minY + controls.height + spacing),
+                              anchor: .topLeading,
+                              proposal: ProposedViewSize(width: bounds.width,
+                                  height: max(128, bounds.height - controls.height - spacing)))
+        }
     }
 }
 
@@ -394,6 +423,7 @@ struct DriveCurve: Shape {
 }
 
 struct MIDIStatus: View {
+    @EnvironmentObject var model: SynthModel
     @ObservedObject var audio: AudioController
     var body: some View {
         HStack(spacing: 6) {
@@ -401,25 +431,32 @@ struct MIDIStatus: View {
             Text(audio.midiSources.isEmpty ? "MIDI · No keyboard connected" : "MIDI · " + audio.midiSources.joined(separator: ", "))
                 .lineLimit(1)
         }.font(.system(size: 10)).foregroundStyle(Palette.secondary)
-            .help(audio.status)
+            .hint(audio.status, enabled: model.showHints)
     }
 }
 
 struct InstrumentKeyboard: View {
     @EnvironmentObject var model: SynthModel
     @ObservedObject var audio: AudioController
-    private let notes = Array(48...83)
+    // Keep all computer-key mappings visible when changing octave.
+    private var notes: [Int] {
+        let first = max(0, min(7, model.octave - 1)) * 12 + 12
+        return Array(first...(first + 35))
+    }
     private var whites: [Int] { notes.filter { !isBlack($0) } }
     private func isBlack(_ note: Int) -> Bool { [1, 3, 6, 8, 10].contains(note % 12) }
     private func keyLabel(_ note: Int) -> String {
         if let index = ComputerKeyboard.semitones.firstIndex(of: note - model.octave * 12 - 12) { return ComputerKeyboard.letters[index].uppercased() }
-        return note % 12 == 0 ? "C\(note / 12 - 1)" : ""
+        return ""
     }
     var body: some View {
-        VStack(spacing: 8) {
+        GeometryReader { keyboard in
+            let keyHeight = max(104, keyboard.size.height - 24)
+            VStack(spacing: 8) {
             HStack(spacing: 9) {
                 Text("KEYBOARD").font(.system(size: 9, weight: .semibold, design: .monospaced)).tracking(1)
-                Text(audio.isRunning ? "Play your Yamaha, click a key, or use A W S E D F…" : "Start audio to play. Your Yamaha will connect automatically.")
+                Text("Note names · boxed letters are typing keys").font(.system(size: 9)).foregroundStyle(Palette.secondary)
+                Text(audio.isRunning ? "" : "Start audio to play.")
                     .font(.system(size: 10)).foregroundStyle(Palette.secondary)
                 Spacer()
                 Text("COMPUTER OCTAVE").font(.system(size: 8, design: .monospaced)).foregroundStyle(Palette.secondary)
@@ -428,7 +465,7 @@ struct InstrumentKeyboard: View {
                 Text("\(model.octave)").font(.system(size: 10, design: .monospaced)).frame(width: 14)
                 Button { model.releaseLocalNotes(); model.octave = min(7, model.octave + 1) } label: { Image(systemName: "plus") }
                     .buttonStyle(.plain).accessibilityLabel("Computer keyboard octave up")
-            }
+            }.frame(height: 16)
             GeometryReader { proxy in
                 let keyWidth = proxy.size.width / CGFloat(whites.count)
                 ZStack(alignment: .topLeading) {
@@ -440,14 +477,15 @@ struct InstrumentKeyboard: View {
                     ForEach(notes.filter(isBlack), id: \.self) { note in
                         let whiteCount = whites.filter { $0 < note }.count
                         PianoKey(note: note, black: true, label: keyLabel(note), held: model.heldNotes.contains(note) || audio.activeNotes.contains(note))
-                            .frame(width: keyWidth * 0.6, height: 55)
+                            .frame(width: keyWidth * 0.6, height: keyHeight * 0.64)
                             .offset(x: CGFloat(whiteCount) * keyWidth - keyWidth * 0.3)
                     }
                 }.background(Palette.ink)
-            }.frame(height: 80)
+            }.frame(height: keyHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 3))
                 .overlay(RoundedRectangle(cornerRadius: 3).stroke(Palette.ink.opacity(0.5), lineWidth: 1))
-        }
+            }
+        }.frame(minHeight: 128)
     }
 }
 
@@ -462,9 +500,17 @@ struct PianoKey: View {
         ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(LinearGradient(colors: held ? [Palette.orange.opacity(0.8), Palette.orange] : (black ? [Color(hex: 0x40453D), Color(hex: 0x242A25)] : [Color(hex: 0xFAF7ED), Color(hex: 0xE3DECE)]), startPoint: .top, endPoint: .bottom))
-            Text(label).font(.system(size: 8, weight: .medium, design: .monospaced))
-                .foregroundStyle(held ? Palette.panel : (black ? Palette.panel.opacity(0.5) : Palette.secondary.opacity(0.65)))
-                .padding(.bottom, black ? 5 : 7)
+            VStack(spacing: 4) {
+                Text("\(["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"][note % 12])\(note / 12 - 1)")
+                    .font(.system(size: black ? 10 : 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(held ? Palette.panel : (black ? Palette.panel : Palette.ink))
+                Text(label.isEmpty ? " " : label)
+                    .font(.system(size: 8, weight: .medium, design: .monospaced))
+                    .frame(width: 17, height: 14)
+                    .background((black ? Color.white : Palette.ink).opacity(label.isEmpty ? 0 : 0.08), in: RoundedRectangle(cornerRadius: 3))
+                    .overlay(RoundedRectangle(cornerRadius: 3).stroke((black ? Palette.panel : Palette.ink).opacity(label.isEmpty ? 0 : 0.2), lineWidth: 0.5))
+                    .foregroundStyle(held ? Palette.panel : (black ? Palette.panel.opacity(0.8) : Palette.secondary))
+            }.padding(.bottom, black ? 6 : 9)
         }.shadow(color: .black.opacity(black ? 0.3 : 0), radius: 1, y: 2)
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { _ in

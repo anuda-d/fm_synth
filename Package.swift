@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "AmberFM",
+    name: "FMSynth",
     platforms: [.macOS(.v14)],
-    products: [.executable(name: "AmberFM", targets: ["AmberFM"])],
+    products: [.executable(name: "FMSynth", targets: ["FMSynth"])],
     targets: [
         .target(name: "CDSP", path: "src/CDSP", publicHeadersPath: "include", cxxSettings: [.unsafeFlags(["-O3"])]),
-        .executableTarget(name: "AmberFM", dependencies: ["CDSP"], path: "src/AmberFM",
+        .executableTarget(name: "FMSynth", dependencies: ["CDSP"], path: "src/AmberFM",
                           linkerSettings: [.linkedFramework("SwiftUI"), .linkedFramework("AppKit"),
                                            .linkedFramework("AVFoundation"), .linkedFramework("CoreMIDI")])
     ],

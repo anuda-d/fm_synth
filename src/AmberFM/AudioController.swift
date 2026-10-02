@@ -601,7 +601,7 @@ final class AudioController: ObservableObject {
     }
 
     private func setupMIDI() {
-        let clientResult = MIDIClientCreateWithBlock("Amber FM" as CFString, &midiClient) { [weak self] _ in
+        let clientResult = MIDIClientCreateWithBlock("FM Synth" as CFString, &midiClient) { [weak self] _ in
             Task { @MainActor [weak self] in self?.refreshMIDISources() }
         }
         guard clientResult == noErr else {

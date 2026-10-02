@@ -10,20 +10,21 @@ export SWIFTPM_MODULECACHE_OVERRIDE="$PWD/build/ModuleCache"
 mkdir -p build/ModuleCache
 SDK_PATH="$(xcrun --show-sdk-path)"
 swift build -c release --disable-sandbox --cache-path "$PWD/build/SwiftPMCache" --config-path "$PWD/build/SwiftPMConfig" --security-path "$PWD/build/SwiftPMSecurity" -Xswiftc -sdk -Xswiftc "$SDK_PATH" -Xcc -isysroot -Xcc "$SDK_PATH"
-APP_PATH="$PWD/build/AmberFM.app"
+APP_PATH="$PWD/build/FM Synth.app"
 mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources"
-cp .build/release/AmberFM "$APP_PATH/Contents/MacOS/AmberFM"
-swift -module-cache-path "$PWD/build/ModuleCache" scripts/make-icon.swift "$PWD/build/AmberFM.iconset"
-iconutil -c icns "$PWD/build/AmberFM.iconset" -o "$APP_PATH/Contents/Resources/AmberFM.icns"
+cp .build/release/FMSynth "$APP_PATH/Contents/MacOS/FMSynth"
+swift -module-cache-path "$PWD/build/ModuleCache" scripts/make-icon.swift "$PWD/build/FMSynth.iconset"
+iconutil -c icns "$PWD/build/FMSynth.iconset" -o "$APP_PATH/Contents/Resources/FMSynth.icns"
 cat > "$APP_PATH/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleName</key><string>Amber FM</string>
-<key>CFBundleDisplayName</key><string>Amber FM</string>
+<key>CFBundleName</key><string>FM Synth</string>
+<key>CFBundleDisplayName</key><string>FM Synth</string>
+<!-- Keep the original identifier so existing preferences remain available. -->
 <key>CFBundleIdentifier</key><string>local.amberfm.synth</string>
-<key>CFBundleExecutable</key><string>AmberFM</string>
-<key>CFBundleIconFile</key><string>AmberFM</string>
+<key>CFBundleExecutable</key><string>FMSynth</string>
+<key>CFBundleIconFile</key><string>FMSynth</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>1.0</string>
 <key>CFBundleVersion</key><string>1</string>
@@ -35,5 +36,5 @@ PLIST
 plutil -lint "$APP_PATH/Contents/Info.plist"
 codesign --force --sign - "$APP_PATH"
 codesign --verify --strict "$APP_PATH"
-test -x "$APP_PATH/Contents/MacOS/AmberFM"
-echo "AMBER_APP_BUILD_PASS: $APP_PATH"
+test -x "$APP_PATH/Contents/MacOS/FMSynth"
+echo "FM_SYNTH_APP_BUILD_PASS: $APP_PATH"
